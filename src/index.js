@@ -19,6 +19,7 @@ const userSchema1 = joi.object({
 });
 
 const userSchema2 = joi.object({
+  user:joi.string().required().min(1), //Alteração 30/11
   to: joi.string().required().min(1),
   text: joi.string().required().min(1),
   type: joi.string().valid("message").valid("private_message"),
@@ -72,7 +73,7 @@ app.post("/participants", async (req, res) => {
       to: "Todos",
       text: "entra na sala...",
       type: "status",
-      time: timeA,
+      time: dayjs().format("HH:mm:ss"), //Alteração 30/11
     });
 
     res.status(201).send({ message: "Ok!" });
@@ -110,7 +111,7 @@ app.post("/messages", async (req, res) => {
 
     if (validation.error) {
       const erros = validation.error.details.map((detail) => detail.message);
-      res.status(422).send(erros);
+      res.status(422).send(erros); //Atualização 30/11 >>> Linha já existia Só faltava a validação para funcionar 
       return;
     }
     // await userCollection.insertOne({
@@ -127,7 +128,7 @@ app.post("/messages", async (req, res) => {
       to: to,
       text: text,
       type: type,
-      time: timeA,
+      time: dayjs().format("HH:mm:ss"), //Alteração 30/11
     });
     res.status(201).send({ message: "Ok!" });
   } catch (err) {
@@ -137,7 +138,7 @@ app.post("/messages", async (req, res) => {
 
 app.get("/messages", async (req, res) => {
   const user = req.headers;
-  let { limit } = req.query;
+  let { limit } = parseInt(req.query);
   try {
     const messagesG = await messagesCollection.find({}).toArray();
     const arrayAux = [];
@@ -163,9 +164,9 @@ app.get("/messages", async (req, res) => {
 
 app.post("/status", async (req, res) => {
   const user = req.headers;
-  //console.log("Eu sou o user", user);
+  console.log("Eu sou o user", user);
 
-  const userExists = await userCollection.findOne({ name: user });
+  const userExists = await userCollection.findOne({ name: user.name }); //Atualizado 1/12
   if (!userExists) {
     return res.status(404).send({ message: "O participante não existe" });
   }
@@ -173,7 +174,7 @@ app.post("/status", async (req, res) => {
   try {
     await userCollection.updateOne(
       { name: user },
-      { $set: { lastStatus: Date.now() } }
+      { $set: { lastStatus: dayjs().format("HH:mm:ss") } }
     );
     res.status(200).send({ message: "Ok!" });
   } catch (err) {
@@ -198,7 +199,7 @@ async function limpaUsuarios() {
           to: "Todos",
           text: "sai da sala...",
           type: "status",
-          time: timeA,
+          time: dayjs().format("HH:mm:ss"), //Alteração 30/11
         });
     }catch(err){
       res.status(500).send(err);
